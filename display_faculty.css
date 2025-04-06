@@ -1,0 +1,42 @@
+body {
+    background: #f4f6f8;
+    font-family: 'Poppins', sans-serif;
+    padding: 40px;
+  }
+  
+  .display-container {
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  h1 {
+    text-align: center;
+    color: #0077ff;
+    margin-bottom: 30px;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  thead {
+    background-color: #0077ff;
+    color: white;
+  }
+  
+  th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+  
+  tbody tr:hover {
+    background-color: #f0f8ff;
+  }
+  
