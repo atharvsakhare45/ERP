@@ -1,66 +1,138 @@
+<?php
+include("db_config.php");
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $course_id = $_POST['course_id'];
+    
+    // First check if course exists
+    $check_sql = "SELECT * FROM courses WHERE course_id = ?";
+    $stmt = $conn->prepare($check_sql);
+    $stmt->bind_param("s", $course_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        // Course exists, proceed with deletion
+        $delete_sql = "DELETE FROM courses WHERE course_id = ?";
+        $stmt = $conn->prepare($delete_sql);
+        $stmt->bind_param("s", $course_id);
+        
+        if ($stmt->execute()) {
+            echo "<script>
+                    showAlert('success', 'Course deleted successfully');
+                    setTimeout(() => { window.location.href = 'courses.php'; }, 1500);
+                  </script>";
+        } else {
+            echo "<script>showAlert('error', 'Error deleting course: " . addslashes($conn->error) . "');</script>";
+        }
+    } else {
+        echo "<script>showAlert('error', 'Course not found');</script>";
+    }
+    
+    $stmt->close();
+    $conn->close();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Delete Course</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #ff4757;
-      --primary-dark: #ff2d42;
-      --accent: #ff6b81;
-      --background: #f8f9fa;
-      --text: #2d3436;
+      --primary-light: #ff6b81;
+      --primary-dark: #ff0000;
+      --accent: #ff6348;
+      --light: #f8f9fa;
+      --dark: #2f3542;
+      --gray: #747d8c;
       --radius: 12px;
-      --shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.1);
+      --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 10px 30px -15px rgba(0, 0, 0, 0.2);
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    body {
+    * {
       margin: 0;
-      background: var(--background);
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f1f2f6 0%, #dfe4ea 100%);
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      overflow: hidden;
+      padding: 20px;
+      overflow-x: hidden;
     }
 
     .floating-bg {
-      position: absolute;
-      width: 400px;
-      height: 400px;
-      background: linear-gradient(45deg, var(--primary), var(--accent));
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(135deg, rgba(255, 71, 87, 0.1) 0%, rgba(255, 99, 72, 0.1) 100%);
       border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-      filter: blur(60px);
-      opacity: 0.1;
-      animation: float 15s infinite ease-in-out;
       z-index: -1;
+      animation: float 15s infinite ease-in-out;
+      filter: blur(30px);
+      opacity: 0.7;
+    }
+
+    .floating-bg:nth-child(1) {
+      top: -100px;
+      left: -100px;
+    }
+
+    .floating-bg:nth-child(2) {
+      bottom: -100px;
+      right: -100px;
+      animation-delay: 2s;
     }
 
     @keyframes float {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      25% { transform: translate(50px, 50px) rotate(5deg); }
-      50% { transform: translate(0, 100px) rotate(0deg); }
-      75% { transform: translate(-50px, 50px) rotate(-5deg); }
+      0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+      }
+      25% {
+        transform: translate(50px, 50px) rotate(5deg);
+      }
+      50% {
+        transform: translate(0, 100px) rotate(0deg);
+      }
+      75% {
+        transform: translate(-50px, 50px) rotate(-5deg);
+      }
     }
 
     .form-container {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
-      padding: 40px;
+      -webkit-backdrop-filter: blur(10px);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-md);
+      padding: 40px;
       width: 100%;
-      max-width: 400px;
-      transform: translateY(20px);
-      opacity: 0;
-      animation: slideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      max-width: 500px;
+      text-align: center;
+      transform: translateY(0);
+      opacity: 1;
+      transition: var(--transition);
       border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: fadeInUp 0.6s ease-out;
     }
 
-    @keyframes slideUp {
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
       to {
         opacity: 1;
         transform: translateY(0);
@@ -68,146 +140,167 @@
     }
 
     h2 {
-      text-align: center;
       color: var(--primary);
-      margin-bottom: 30px;
-      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
     }
 
+    .warning-message {
+      background: rgba(255, 71, 87, 0.1);
+      color: var(--primary);
+      padding: 15px;
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+      font-weight: 500;
+      border-left: 4px solid var(--primary);
+      animation: pulseWarning 2s infinite;
+    }
+
+    @keyframes pulseWarning {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.1);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(255, 71, 87, 0);
+      }
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
     .input-group {
       position: relative;
-      margin-bottom: 25px;
     }
 
     input {
       width: 100%;
-      padding: 15px;
-      border: 2px solid #eee;
-      border-radius: var(--radius);
-      font-size: 1rem;
+      padding: 15px 0;
+      border: none;
+      border-bottom: 2px solid #ddd;
+      font-size: 16px;
       transition: var(--transition);
-      background: rgba(255, 255, 255, 0.9);
+      outline: none;
+      background: transparent;
     }
 
     input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.2);
+      border-bottom-color: var(--primary);
     }
 
     .underline {
       position: absolute;
       bottom: 0;
       left: 0;
-      width: 100%;
+      width: 0;
       height: 2px;
       background: var(--primary);
-      transform: scaleX(0);
       transition: var(--transition);
     }
 
     input:focus ~ .underline {
-      transform: scaleX(1);
+      width: 100%;
     }
 
     button {
-      width: 100%;
-      padding: 15px;
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
       border: none;
+      padding: 15px;
       border-radius: var(--radius);
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
-      position: relative;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
     }
 
     button:hover {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(255, 71, 87, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
     }
 
-    button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255, 255, 255, 0.3),
-        transparent
-      );
-      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    button:hover::before {
-      left: 100%;
-    }
-
-    .warning-message {
-      text-align: center;
-      color: #666;
-      margin-bottom: 25px;
-      animation: fadeIn 0.6s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .confirmation-dialog {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 30px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      text-align: center;
-      animation: scaleIn 0.3s ease-out;
-    }
-
-    @keyframes scaleIn {
-      from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-      to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    button:active {
+      transform: translateY(0);
     }
 
     .loading-spinner {
       display: none;
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid var(--primary);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .loading-spinner::after {
+      content: "";
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
+      border-top-color: var(--primary);
       animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
-      0% { transform: translate(-50%, -50%) rotate(0deg); }
-      100% { transform: translate(-50%, -50%) rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
-    @media (max-width: 480px) {
+    .alert {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      border-radius: var(--radius);
+      color: white;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(150%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .alert.success {
+      background: linear-gradient(135deg, #2ed573, #20bf6b);
+    }
+
+    .alert.error {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+    }
+
+    .alert.show {
+      transform: translateX(0);
+    }
+
+    @media (max-width: 768px) {
       .form-container {
         padding: 30px;
-        margin: 15px;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
       }
     }
   </style>
@@ -223,10 +316,10 @@
     </h2>
     
     <div class="warning-message">
-      Warning: This action cannot be undone. Please confirm the course ID carefully.
+      <i class="fas fa-radiation"></i> Warning: This action is permanent and cannot be undone.
     </div>
 
-    <form method="POST" action="" id="deleteForm">
+    <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" id="deleteForm">
       <div class="input-group">
         <input 
           type="text" 
@@ -237,37 +330,75 @@
         >
         <span class="underline"></span>
       </div>
-      <button type="submit">Delete Course</button>
+      <button type="submit">
+        <i class="fas fa-trash-alt"></i> Delete Course
+      </button>
     </form>
   </div>
 
   <div class="loading-spinner"></div>
 
+  <div id="alertContainer"></div>
+
   <script>
+    // Show alert function
+    function showAlert(type, message) {
+      const alertContainer = document.getElementById('alertContainer');
+      const alert = document.createElement('div');
+      alert.className = `alert ${type}`;
+      
+      const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+      alert.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+      
+      alertContainer.appendChild(alert);
+      
+      // Trigger reflow to enable animation
+      void alert.offsetWidth;
+      
+      alert.classList.add('show');
+      
+      // Remove alert after 3 seconds
+      setTimeout(() => {
+        alert.classList.remove('show');
+        setTimeout(() => {
+          alert.remove();
+        }, 300);
+      }, 3000);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      // Form submission handling
       const form = document.getElementById('deleteForm');
       const spinner = document.querySelector('.loading-spinner');
+      const courseInput = form.elements['course_id'];
+
+      // Focus animation
+      courseInput.addEventListener('focus', () => {
+        document.querySelector('.underline').style.width = '100%';
+      });
+
+      courseInput.addEventListener('blur', () => {
+        if (!courseInput.value) {
+          document.querySelector('.underline').style.width = '0';
+        }
+      });
 
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        spinner.style.display = 'block';
         
-        // Simulate processing delay
-        setTimeout(() => {
-          form.submit();
-          spinner.style.display = 'none';
-        }, 1500);
-      });
-
-      // Input animation
-      const input = document.querySelector('input');
-      input.addEventListener('focus', () => {
-        input.parentElement.querySelector('.underline').style.transform = 'scaleX(1)';
-      });
-      input.addEventListener('blur', () => {
-        if (!input.value) {
-          input.parentElement.querySelector('.underline').style.transform = 'scaleX(0)';
+        const courseId = courseInput.value.trim();
+        
+        if (!courseId) {
+          showAlert('error', 'Please enter a course ID');
+          return;
+        }
+        
+        if (confirm(`Are you absolutely sure you want to delete course ${courseId}?\n\nThis will permanently remove all course data.`)) {
+          spinner.style.display = 'flex';
+          
+          // Submit the form after confirmation
+          setTimeout(() => {
+            form.submit();
+          }, 500);
         }
       });
     });
